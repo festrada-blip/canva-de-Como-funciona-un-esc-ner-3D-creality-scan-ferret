@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escaneo e Impresión 3D: Creality CR-Scan Ferret</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        creality: {
+                            blue: '#00D2FF',
+                            orange: '#FF6B00',
+                            dark: '#0B0F19',
+                            card: '#161F30',
+                            border: '#2A364F'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-family/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Canvas Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0B0F19;
+            color: #E2E8F0;
+        }
+        .glass-card {
+            background: rgba(22, 31, 48, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card-hover {
+            transition: all 0.3s ease;
+        }
+        .glass-card-hover:hover {
+            border-color: rgba(0, 210, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 210, 255, 0.15);
+        }
+        .neon-glow-blue {
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.25);
+        }
+        .neon-glow-orange {
+            box-shadow: 0 0 20px rgba(255, 107, 0, 0.25);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0B0F19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1E293B;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00D2FF;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12 selection:bg-creality-blue selection:text-black">
+
+    <!-- Header / Title Banner -->
+    <header class="relative overflow-hidden border-b border-creality-border bg-gradient-to-b from-slate-900 via-creality-dark to-creality-dark pt-8 pb-12 px-4 sm:px-6 lg:px-8">
+        <div class="absolute -top-24 -left-24 w-96 h-96 bg-creality-blue/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -top-24 -right-24 w-96 h-96 bg-creality-orange/10 rounded-full blur-3xl pointer-events-none"></div>
+        
+        <div class="max-w-7xl mx-auto relative z-10 text-center">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-creality-blue/10 border border-creality-blue/30 text-creality-blue text-xs font-semibold tracking-wide uppercase mb-4">
+                <i class="fa-solid fa-cube"></i> Resumen de Video & Guía Técnica
+            </div>
+            <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4">
+                Escaneo e Impresión 3D con <span class="bg-gradient-to-r from-creality-blue to-teal-400 bg-clip-text text-transparent">Creality CR-Scan Ferret</span>
+            </h1>
+            <p class="max-w-3xl mx-auto text-base sm:text-lg text-slate-400">
+                Aprende cómo transformar objetos físicos del mundo real en modelos digitales 3D interactivos y réplicas impresas exactas mediante captura NIR y procesamiento de mallas.
+            </p>
+
+            <!-- Pipeline Overview Pills -->
+            <div class="mt-8 flex flex-wrap justify-center items-center gap-2 sm:gap-4 text-xs sm:text-sm font-medium text-slate-300">
+                <span class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700">1. Objeto Físico</span>
+                <i class="fa-solid fa-arrow-right text-creality-blue hidden sm:inline"></i>
+                <span class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700">2. Nube de Puntos (NIR)</span>
+                <i class="fa-solid fa-arrow-right text-creality-blue hidden sm:inline"></i>
+                <span class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700">3. Malla Poligonal (STL/OBJ)</span>
+                <i class="fa-solid fa-arrow-right text-creality-blue hidden sm:inline"></i>
+                <span class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700">4. Laminado (G-code)</span>
+                <i class="fa-solid fa-arrow-right text-creality-orange hidden sm:inline"></i>
+                <span class="px-3 py-1.5 rounded-lg bg-creality-orange/20 border border-creality-orange/50 text-creality-orange font-bold">5. Impresión FDM/SLA</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 space-y-12">
+
+        <!-- SECTION 1: Resumen del Video y Conceptos Clave -->
+        <section class="space-y-6">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-8 bg-creality-blue rounded-full"></div>
+                <h2 class="text-2xl font-bold text-white">1. ¿Cómo Funciona el Escaneo 3D?</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Card 1: Fundamento del Escaneo -->
+                <div class="glass-card glass-card-hover rounded-2xl p-6 relative overflow-hidden">
+                    <div class="w-12 h-12 rounded-xl bg-creality-blue/10 text-creality-blue flex items-center justify-center text-xl mb-4">
+                        <i class="fa-solid fa-camera-rotate"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Luz Infrarroja Cercana (NIR)</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        El scanner proyecta patrones invisibles de luz infrarroja. Las cámaras duales capturan la deformación del patrón al chocar con el objeto para calcular las coordenadas X, Y, Z con precisión milimétrica (hasta 0.1 mm).
+                    </p>
+                </div>
+
+                <!-- Card 2: De Puntos a Malla -->
+                <div class="glass-card glass-card-hover rounded-2xl p-6 relative overflow-hidden">
+                    <div class="w-12 h-12 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center text-xl mb-4">
+                        <i class="fa-solid fa-vector-square"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">De Nube de Puntos a STL</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        El scanner recopila millones de puntos en el espacio. El software fusiona estas tomas uniendo los puntos adyacentes con triángulos para crear una **malla poligonal cerrada** lista para modelado o impresión.
+                    </p>
+                </div>
+
+                <!-- Card 3: Color y Textura -->
+                <div class="glass-card glass-card-hover rounded-2xl p-6 relative overflow-hidden">
+                    <div class="w-12 h-12 rounded-xl bg-creality-orange/10 text-creality-orange flex items-center justify-center text-xl mb-4">
+                        <i class="fa-solid fa-palette"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Captura de Textura RGB</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Posee una cámara HD integrada que proyecta el color verdadero sobre la superficie 3D. Esto permite generar archivos .OBJ o .PLY ideales para realidad virtual, renders o animación.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Features Quick Specs -->
+            <div class="glass-card rounded-2xl p-6 border border-creality-border">
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-microchip text-creality-blue"></i> Especificaciones Destacadas: Creality CR-Scan Ferret
+                </h3>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 text-center">
+                    <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                        <p class="text-xs text-slate-400">Precisión</p>
+                        <p class="text-base font-bold text-creality-blue">0.1 mm</p>
+                    </div>
+                    <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                        <p class="text-xs text-slate-400">Peso Ultra Ligero</p>
+                        <p class="text-base font-bold text-white">105 g</p>
+                    </div>
+                    <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                        <p class="text-xs text-slate-400">Distancia de Trabajo</p>
+                        <p class="text-base font-bold text-white">150 - 700 mm</p>
+                    </div>
+                    <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                        <p class="text-xs text-slate-400">Velocidad</p>
+                        <p class="text-base font-bold text-white">Hasta 30 FPS</p>
+                    </div>
+                    <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                        <p class="text-xs text-slate-400">Modos de Trabajo</p>
+                        <p class="text-base font-bold text-creality-orange">Alta Precisión / Rápido</p>
+                    </div>
+                    <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                        <p class="text-xs text-slate-400">Compatibilidad</p>
+                        <p class="text-base font-bold text-white">PC & Android</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: Guía Interactiva Paso a Paso (Workflow Stepper) -->
+        <section class="space-y-6">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-8 bg-creality-orange rounded-full"></div>
+                <h2 class="text-2xl font-bold text-white">2. Simulador Interactivo del Proceso (Paso a Paso)</h2>
+            </div>
+
+            <!-- Interactive Stepper Component -->
+            <div class="glass-card rounded-2xl p-6 sm:p-8">
+                <!-- Step Tabs Navigation -->
+                <div class="flex flex-wrap gap-2 border-b border-slate-700/80 pb-4 mb-6" id="step-tabs">
+                    <button onclick="setStep(1)" id="tab-btn-1" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 bg-creality-blue text-slate-950 font-bold">
+                        <span class="w-5 h-5 rounded-full bg-black/20 flex items-center justify-center text-xs">1</span> Preparación
+                    </button>
+                    <button onclick="setStep(2)" id="tab-btn-2" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 bg-slate-800 text-slate-400 hover:text-white">
+                        <span class="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-xs">2</span> Escaneo
+                    </button>
+                    <button onclick="setStep(3)" id="tab-btn-3" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 bg-slate-800 text-slate-400 hover:text-white">
+                        <span class="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-xs">3</span> Post-Procesado
+                    </button>
+                    <button onclick="setStep(4)" id="tab-btn-4" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 bg-slate-800 text-slate-400 hover:text-white">
+                        <span class="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-xs">4</span> Laminado (Slicer)
+                    </button>
+                    <button onclick="setStep(5)" id="tab-btn-5" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 bg-slate-800 text-slate-400 hover:text-white">
+                        <span class="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-xs">5</span> Impresión 3D
+                    </button>
+                </div>
+
+                <!-- Step Dynamic Content Container -->
+                <div id="step-content" class="min-h-[280px]">
+                    <!-- JavaScript will inject content here -->
+                </div>
+
+                <!-- Stepper Navigation Controls -->
+                <div class="flex justify-between items-center mt-8 pt-4 border-t border-slate-700/60">
+                    <button onclick="prevStep()" id="prev-btn" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-400 text-sm font-medium hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-chevron-left mr-2"></i> Anterior
+                    </button>
+                    <span id="step-indicator" class="text-xs text-slate-400 font-mono">Paso 1 de 5</span>
+                    <button onclick="nextStep()" id="next-btn" class="px-4 py-2 rounded-lg bg-creality-blue text-slate-950 text-sm font-bold hover:bg-cyan-300">
+                        Siguiente <i class="fa-solid fa-chevron-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: Consejos Prácticos & Solución de Problemas -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Pro Tips / Materiales Difíciles -->
+            <div class="glass-card rounded-2xl p-6 space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-lightbulb"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Trucos de Escaneo (Objetos Retadores)</h3>
+                        <p class="text-xs text-slate-400">Cómo superar las limitaciones físicas de los escaneres NIR</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3 mt-4">
+                    <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex gap-3">
+                        <i class="fa-solid fa-spray-can text-creality-orange mt-1"></i>
+                        <div>
+                            <p class="text-sm font-semibold text-white">Objetos Brillantes o Transparentes (Vidrio/Metal)</p>
+                            <p class="text-xs text-slate-400 mt-0.5">La luz se refleja o atraviesa. **Solución:** Aplicar aerosol esparcidor matificante lavable o talco en aerosol antes de escanear.</p>
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex gap-3">
+                        <i class="fa-solid fa-sun text-amber-400 mt-1"></i>
+                        <div>
+                            <p class="text-sm font-semibold text-white">Superficies Negras Absorbentes</p>
+                            <p class="text-xs text-slate-400 mt-0.5">El color negro absorbe la luz infrarroja. **Solución:** Activar el modo de iluminación para objetos oscuros en la app Creality Scan.</p>
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex gap-3">
+                        <i class="fa-solid fa-arrows-spin text-creality-blue mt-1"></i>
+                        <div>
+                            <p class="text-sm font-semibold text-white">Simetría Extrema (Esferas o Cubos Lisos)</p>
+                            <p class="text-xs text-slate-400 mt-0.5">El scanner pierde el rastreo al no encontrar rasgos únicos. **Solución:** Pegar stickers marcadores o colocar objetos de apoyo alrededor.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz / Checklist Interactivo -->
+            <div class="glass-card rounded-2xl p-6 space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-creality-blue/10 text-creality-blue flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Checklist: Ready for 3D Print?</h3>
+                        <p class="text-xs text-slate-400">Verifica si tu modelo 3D está listo para enviarse a la impresora</p>
+                    </div>
+                </div>
+
+                <div class="space-y-2 mt-4" id="checklist">
+                    <label class="flex items-center p-3 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 cursor-pointer transition">
+                        <input type="checkbox" class="w-4 h-4 rounded text-creality-blue bg-slate-800 border-slate-700 focus:ring-0 mr-3" onchange="updateChecklist()">
+                        <span class="text-sm text-slate-300">Malla 100% Hermética / Watertight (Sin Agujeros)</span>
+                    </label>
+                    <label class="flex items-center p-3 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 cursor-pointer transition">
+                        <input type="checkbox" class="w-4 h-4 rounded text-creality-blue bg-slate-800 border-slate-700 focus:ring-0 mr-3" onchange="updateChecklist()">
+                        <span class="text-sm text-slate-300">Base Plana para Adhesión a la Cama</span>
+                    </label>
+                    <label class="flex items-center p-3 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 cursor-pointer transition">
+                        <input type="checkbox" class="w-4 h-4 rounded text-creality-blue bg-slate-800 border-slate-700 focus:ring-0 mr-3" onchange="updateChecklist()">
+                        <span class="text-sm text-slate-300">Soportes Activados para Voladizos (Overhangs > 45°)</span>
+                    </label>
+                    <label class="flex items-center p-3 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 cursor-pointer transition">
+                        <input type="checkbox" class="w-4 h-4 rounded text-creality-blue bg-slate-800 border-slate-700 focus:ring-0 mr-3" onchange="updateChecklist()">
+                        <span class="text-sm text-slate-300">Escala de Medidas Verificada en Milímetros</span>
+                    </label>
+                </div>
+
+                <!-- Progress status -->
+                <div class="pt-2">
+                    <div class="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+                        <span>Estado de Preparación</span>
+                        <span id="checklist-status">0% Completado</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                        <div id="checklist-bar" class="bg-gradient-to-r from-creality-blue to-teal-400 h-full w-0 transition-all duration-300"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 pt-8 border-t border-slate-800 text-center text-xs text-slate-500">
+        <p>Resumen visual interactivo inspirado en el ecosistema Creality 3D (CR-Scan Ferret & Creality Print).</p>
+    </footer>
+
+    <!-- Interactive Stepper Script -->
+    <script>
+        const stepsData = [
+            {
+                step: 1,
+                title: "Paso 1: Preparación del Entorno y Objeto",
+                icon: "fa-solid fa-wand-magic-sparkles",
+                badge: "Antes de Escanear",
+                badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+                description: "Una correcta preparación garantiza un rastreo fluido y evita la pérdida de alineación (Tracking Lost).",
+                details: [
+                    "**Iluminación uniforme:** Evita la luz solar directa intensa (la radiación IR del sol interfiere con el scanner). Preferible luz indirecta o de estudio.",
+                    "**Superficie o Mesa Giratoria:** Colocar el objeto sobre una mesa giratoria (Turntable) facilita un giro continuo a velocidad constante.",
+                    "**Tratamiento de la superficie:** Si la figura es negra muy brillante, transparente o metálica, rocía una capa tenue de aerosol opacador."
+                ]
+            },
+            {
+                step: 2,
+                title: "Paso 2: Proceso de Escaneo 3D",
+                icon: "fa-solid fa-radar",
+                badge: "Captura de Datos",
+                badgeColor: "bg-creality-blue/10 text-creality-blue border-creality-blue/20",
+                description: "Captura la geometría en tiempo real ajustando la distancia y velocidad.",
+                details: [
+                    "**Control de Distancia:** Mantén la barra de distancia en pantalla dentro de la zona 'Verde' u 'Optima' (Aprox. 150-400 mm).",
+                    "**Movimiento constante:** Haz girar la plataforma lentamente o mueve el scanner formando un arco suave sobre el objeto.",
+                    "**Múltiples ángulos:** Realiza una primera pasada lateral, luego orienta el scanner hacia la parte superior e inferior para cubrir todos los huecos."
+                ]
+            },
+            {
+                step: 3,
+                title: "Paso 3: Post-Procesado y Optimización de la Malla",
+                icon: "fa-solid fa-laptop-code",
+                badge: "Creality Scan / Blender",
+                badgeColor: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+                description: "Transforma la nube de puntos bruta en un sólido digital sin defectos.",
+                details: [
+                    "**Aislamiento y Limpieza:** Elimina puntos flotantes en el aire y borra la plano base/mesa capturada.",
+                    "**Optimización y Cierre (Hole Filling):** Utiliza la función 'Auto-Repair' para tapar agujeros y hacer el modelo hermético (Manifold/Watertight).",
+                    "**Exportación:** Guarda el archivo final en formato **.STL** (para impresión monocolor) o **.OBJ / .PLY** (con mapa de texturas)."
+                ]
+            },
+            {
+                step: 4,
+                title: "Paso 4: Laminado (Slicing en Cura / Creality Print)",
+                icon: "fa-solid fa-layer-group",
+                badge: "Preparación de Código G-Code",
+                badgeColor: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+                description: "Convierte el modelo 3D en capas físicas legibles por la impresora.",
+                details: [
+                    "**Orientación:** Ubica el lado más plano del objeto sobre la cama para asegurar máxima estabilidad durante la impresión.",
+                    "**Parámetros Clave:** Configura altura de capa (0.12mm - 0.2mm), relleno (Infill ~15-20%) y grosor de pared.",
+                    "**Soportes (Supports):** Activa soportes tipo árbol (Tree Supports) si el scanner capturó voladizos pronunciados o brazos suspendidos."
+                ]
+            },
+            {
+                step: 5,
+                title: "Paso 5: Impresión 3D FDM / Resina",
+                icon: "fa-solid fa-print",
+                badge: "Réplica Física",
+                badgeColor: "bg-creality-orange/10 text-creality-orange border-creality-orange/20",
+                description: "El objeto físico vuelve al mundo real gracias al filamento o resina fotopolímera.",
+                details: [
+                    "**Transferencia:** Exporta el archivo **.GCODE** a través de tarjeta SD, USB o transmisión Wi-Fi (Creality Cloud).",
+                    "**Monitoreo de Primera Capa:** Asegura la correcta nivelación de la cama para prevenir desprendimientos.",
+                    "**Resultado Final:** Retira soportes y pule la superficie si es necesario. ¡Has clonado un objeto en 3D!"
+                ]
+            }
+        ];
+
+        let currentStep = 1;
+
+        function renderStep(stepNumber) {
+            const data = stepsData.find(s => s.step === stepNumber);
+            const container = document.getElementById('step-content');
+
+            let detailsListHtml = data.details.map(item => {
+                // Formatting markdown bold
+                let formatted = item.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>');
+                return `<li class="flex items-start gap-3 text-slate-300 text-sm">
+                    <i class="fa-solid fa-circle-check text-creality-blue mt-1 shrink-0"></i>
+                    <span>${formatted}</span>
+                </li>`;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="space-y-6 animate-fadeIn">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 text-creality-blue flex items-center justify-center text-xl">
+                                <i class="${data.icon}"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">${data.title}</h3>
+                                <p class="text-xs text-slate-400 mt-0.5">${data.description}</p>
+                            </div>
+                        </div>
+                        <span class="px-3 py-1 rounded-full border text-xs font-semibold ${data.badgeColor}">
+                            ${data.badge}
+                        </span>
+                    </div>
+
+                    <div class="bg-slate-900/80 rounded-xl p-5 border border-slate-800">
+                        <ul class="space-y-3">
+                            ${detailsListHtml}
+                        </ul>
+                    </div>
+                </div>
+            `;
+
+            // Update UI buttons & indicator
+            document.getElementById('step-indicator').innerText = `Paso ${stepNumber} de ${stepsData.length}`;
+            document.getElementById('prev-btn').disabled = stepNumber === 1;
+
+            const nextBtn = document.getElementById('next-btn');
+            if (stepNumber === stepsData.length) {
+                nextBtn.innerHTML = '¡Completado! <i class="fa-solid fa-check ml-2"></i>';
+                nextBtn.classList.replace('bg-creality-blue', 'bg-emerald-500');
+            } else {
+                nextBtn.innerHTML = 'Siguiente <i class="fa-solid fa-chevron-right ml-2"></i>';
+                nextBtn.classList.replace('bg-emerald-500', 'bg-creality-blue');
+            }
+
+            // Update active tab styles
+            for (let i = 1; i <= 5; i++) {
+                const tab = document.getElementById(`tab-btn-${i}`);
+                if (i === stepNumber) {
+                    tab.className = "px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 bg-creality-blue text-slate-950 font-bold";
+                    tab.querySelector('span').className = "w-5 h-5 rounded-full bg-black/20 flex items-center justify-center text-xs";
+                } else {
+                    tab.className = "px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 bg-slate-800 text-slate-400 hover:text-white";
+                    tab.querySelector('span').className = "w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-xs";
+                }
+            }
+        }
+
+        function setStep(step) {
+            currentStep = step;
+            renderStep(currentStep);
+        }
+
+        function nextStep() {
+            if (currentStep < stepsData.length) {
+                currentStep++;
+                renderStep(currentStep);
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                renderStep(currentStep);
+            }
+        }
+
+        function updateChecklist() {
+            const checkboxes = document.querySelectorAll('#checklist input[type="checkbox"]');
+            let checkedCount = 0;
+            checkboxes.forEach(cb => {
+                if (cb.checked) checkedCount++;
+            });
+            const percentage = Math.round((checkedCount / checkboxes.length) * 100);
+            
+            document.getElementById('checklist-status').innerText = `${percentage}% Completado`;
+            document.getElementById('checklist-bar').style.width = `${percentage}%`;
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            renderStep(1);
+        };
+    </script>
+</body>
+</html>
